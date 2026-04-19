@@ -2,34 +2,18 @@
 
 import React, { useState, useMemo } from 'react';
 import { useFormStore } from '@/stores/formStore';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { countryStepSchema, CountryStepData } from '@/validators/formValidation';
 import { COUNTRIES, getRegionsForCountry } from '@/lib/countriesData';
 import { Search, MapPin } from 'lucide-react';
 
 export default function CountrySelector() {
-  const { formData, updateFormField, nextStep } = useFormStore();
+  const { formData, updateFormField } = useFormStore();
   const [countrySearchInput, setCountrySearchInput] = useState(formData.country || '');
   const [regionSearchInput, setRegionSearchInput] = useState(formData.region || '');
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
 
-  const {
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-  } = useForm<CountryStepData>({
-    resolver: zodResolver(countryStepSchema),
-    defaultValues: {
-      country: formData.country || '',
-      region: formData.region || '',
-    },
-  });
-
-  const selectedCountry = watch('country');
-  const selectedRegion = watch('region');
+  const selectedCountry = formData.country;
+  const selectedRegion = formData.region;
 
   // Filter countries based on search
   const filteredCountries = useMemo(() => {
@@ -59,26 +43,17 @@ export default function CountrySelector() {
     setRegionSearchInput(''); // Reset region when country changes
     updateFormField('country', country);
     updateFormField('region', '');
-    setValue('country', country);
-    setValue('region', '');
     setIsCountryDropdownOpen(false);
   };
 
   const handleSelectRegion = (region: string) => {
     setRegionSearchInput(region);
     updateFormField('region', region);
-    setValue('region', region);
     setIsRegionDropdownOpen(false);
   };
 
-  const onSubmit = (data: CountryStepData) => {
-    updateFormField('country', data.country);
-    updateFormField('region', data.region);
-    nextStep();
-  };
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
+    <div className="space-y-7">
       {/* Intro Tip */}
       <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4 flex gap-3">
         <span className="text-2xl flex-shrink-0">💡</span>
@@ -131,10 +106,6 @@ export default function CountrySelector() {
             </div>
           )}
         </div>
-
-        {errors.country && (
-          <p className="mt-2 text-sm text-red-600 font-medium">{errors.country.message}</p>
-        )}
       </div>
 
       {/* Region Selection - only show if country is selected */}
@@ -182,10 +153,6 @@ export default function CountrySelector() {
               </div>
             )}
           </div>
-
-          {errors.region && (
-            <p className="mt-2 text-sm text-red-600 font-medium">{errors.region.message}</p>
-          )}
         </div>
       )}
 
@@ -202,14 +169,6 @@ export default function CountrySelector() {
         </div>
       )}
 
-      {/* Confirm Button */}
-      <button
-        type="submit"
-        disabled={!selectedCountry || !selectedRegion}
-        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200 active:scale-95 shadow-sm"
-      >
-        Confirm Selection
-      </button>
-    </form>
+    </div>
   );
 }
