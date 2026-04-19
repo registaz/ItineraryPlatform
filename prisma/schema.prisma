@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Itinerary {
+  id        String     @id @default(cuid())
+  title     String
+  country   String
+  region    String?
+  
+  startDate DateTime
+  endDate   DateTime
+  
+  budget        Float
+  currency      String   @default("USD")
+  spentAmount   Float    @default(0)
+  theme         String
+  dayStartTime  String   @default("09:00") // HH:MM format
+  
+  days      Day[]
+  
+  aiGenerated Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Day {
+  id        String     @id @default(cuid())
+  date      DateTime
+  dayNumber Int
+  area      String?
+  
+  itinerary   Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  itineraryId String
+  
+  activities Activity[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([itineraryId])
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  title       String
+  startTime   String   // HH:MM format
+  duration    Int      // minutes
+  location    String?
+  description String
+  costEstimate Float   @default(0)
+  category    String   @default("other") // dining, transport, attraction, accommodation, activity, shopping, other
+  customized  Boolean  @default(false)
+  notes       String?
+  
+  day   Day    @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  dayId String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([dayId])
+}
