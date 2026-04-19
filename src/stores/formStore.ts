@@ -20,10 +20,13 @@ interface FormStore {
   // Itinerary State
   currentItinerary: Itinerary | null;
   loadingItinerary: boolean;
+  isGenerating: boolean;
   
   // Itinerary Actions
   setCurrentItinerary: (itinerary: Itinerary | null) => void;
   setLoadingItinerary: (loading: boolean) => void;
+  setIsGenerating: (generating: boolean) => void;
+  generateItinerary?: () => Promise<void>;
   
   // localStorage Helper
   getFormDataJSON: () => string;
@@ -56,6 +59,7 @@ export const useFormStore = create<FormStore>()(
       isFormComplete: false,
       currentItinerary: null,
       loadingItinerary: false,
+      isGenerating: false,
 
       // Form Actions
       setFormData: (data) =>
@@ -99,6 +103,9 @@ export const useFormStore = create<FormStore>()(
 
       setLoadingItinerary: (loading) =>
         set({ loadingItinerary: loading }),
+
+      setIsGenerating: (generating) =>
+        set({ isGenerating: generating }),
 
       // Helper
       getFormDataJSON: () => JSON.stringify(get().formData),

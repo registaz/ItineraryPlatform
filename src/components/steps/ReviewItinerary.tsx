@@ -8,11 +8,10 @@ import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
 import { generateMockItinerary } from '@/lib/mockItineraryGenerator';
 
 export default function ReviewItinerary() {
-  const { formData, nextStep } = useFormStore();
-  const { setCurrentItinerary } = useFormStore();
+  const { formData, currentItinerary, setCurrentItinerary, setIsGenerating, isGenerating } = useFormStore();
   const { addItinerary } = useItineraryStore();
-  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasGenerated, setHasGenerated] = useState(!!currentItinerary);
 
   // Validate form data
   const isFormValid =
@@ -77,7 +76,7 @@ export default function ReviewItinerary() {
       if (result.success && result.data) {
         setCurrentItinerary(result.data);
         addItinerary(result.data);
-        nextStep();
+        setHasGenerated(true);
       } else if (isFormValid) {
         // API returned unexpected format, use mock itinerary
         const mockItinerary = generateMockItinerary({
@@ -99,7 +98,7 @@ export default function ReviewItinerary() {
         });
         setCurrentItinerary(mockItinerary);
         addItinerary(mockItinerary);
-        nextStep();
+        setHasGenerated(true);
       } else {
         setError(result.error || 'Failed to generate itinerary');
       }
@@ -125,7 +124,7 @@ export default function ReviewItinerary() {
         });
         setCurrentItinerary(mockItinerary);
         addItinerary(mockItinerary);
-        nextStep();
+        setHasGenerated(true);
       } else {
         setError(err instanceof Error ? err.message : 'An error occurred');
       }
@@ -133,6 +132,14 @@ export default function ReviewItinerary() {
       setIsGenerating(false);
     }
   };
+
+  // Export the handler so WizardLayout can call it (using window global to avoid store update during render)
+  useEffect(() => {
+    (window as any).__generateItinerary = handleGenerateItinerary;
+    return () => {
+      delete (window as any).__generateItinerary;
+    };
+  }, [isFormValid]);
 
   const calculateDays = () => {
     if (!formData.startDate || !formData.endDate) return 0;
@@ -272,34 +279,33 @@ export default function ReviewItinerary() {
         </div>
       )}
 
-      {/* Generate Button */}
-      <button
-        onClick={handleGenerateItinerary}
-        disabled={!isFormValid || isGenerating}
-        className={`w-full py-4 px-6 rounded-lg font-bold text-lg flex items-center justify-center gap-2 transition-all ${
-          isGenerating || !isFormValid
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'
-        }`}
-      >
-        {isGenerating ? (
-          <>
-            <Loader size={24} className="animate-spin" />
-            Generating Your Itinerary...
-          </>
-        ) : (
-          <>
-            ✨ Generate My Itinerary
-          </>
-        )}
-      </button>
-
       {/* Validation Warning */}
       {!isFormValid && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-800">
-            ⚠️ Please go back and complete all required fields before generating your itinerary.
+            ⚠️ Please go back and complete all required fields before proceeding.
           </p>
+        </div>
+      )}
+
+      {/* Status Message */}
+      {isGenerating && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
+          <Loader className="text-blue-600 flex-shrink-0 animate-spin" size={20} />
+          <div>
+            <p className="font-semibold text-blue-900">Generating Your Itinerary...</p>
+            <p className="text-sm text-blue-800">This may take a moment.</p>
+          </div>
+        </div>
+      )}
+
+      {hasGenerated && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex gap-3">
+          <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
+          <div>
+            <p className="font-semibold text-green-900">Itinerary Generated!</p>
+            <p className="text-sm text-green-800">Click Next to review and select activity suggestions.</p>
+          </div>
         </div>
       )}
     </div>

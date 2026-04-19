@@ -197,6 +197,12 @@ export function generateMockItinerary(params: AIGenerationRequest): Itinerary {
         duration: Math.floor(60 + Math.random() * 90),
         category: activity.category || ('attraction' as any),
         customized: false,
+        // Populate fields from the first suggestion (selected by default)
+        title: suggestions[0]?.title || activity.title || 'Activity',
+        location: suggestions[0]?.location || activity.location || areaName,
+        description: suggestions[0]?.description || activity.description || '',
+        costEstimate: suggestions[0]?.costEstimate || cost,
+        // Also store suggestions for alternatives
         suggestions: suggestions,
         selectedSuggestionIndex: 0, // Default to first suggestion
       };
